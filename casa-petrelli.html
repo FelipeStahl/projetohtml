@@ -12,11 +12,16 @@
       viga sobre pilares (y = 6,11) e as faixas laterais são pergolados.
     • A divisa com a rua é linha de alinhamento — NÃO há muro frontal.
     • Portas posicionadas pelos arcos de abertura do desenho (dobradiça + raio),
-      não por estimativa: 0,60 / 0,80 / 0,70 / 1,20 m conforme o quadro.
+      não por estimativa: 0,70 / 0,80 / 1,20 m e o vão de duas folhas sob a
+      escada, rotulado P 150x120 mas traçado com 1,00 m livre.
     • Piscina, deck e espreguiçadeiras ficam nos FUNDOS, sobre plataforma
       elevada (+0,45 m) revestida em pedra.
-    • Esta prancha é só o pavimento TÉRREO: a escada de 19 degraus sobe e
-      termina no vazio do forro.
+    • A escada SOBE DO SUL PARA O NORTE: degrau 1 em y = 14,36, chegando na laje
+      em y = 19,76 — 19 espelhos e 18 pisos de 0,30 m. Na prancha os degraus
+      acima do plano de corte vem TRACEJADOS (de y = 16,16 em diante), e as
+      vergas dos nichos sob o lance crescem no mesmo sentido: 1,20 no armário,
+      1,60 no Gás, 2,10 no Depósito.
+    • Esta prancha é só o pavimento TÉRREO: o lance termina no vazio do forro.
 
   Como abrir:
     • Duplo clique costuma funcionar (o Three.js vem de CDN com CORS liberado).
@@ -27,7 +32,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Casa Petrelli — Térreo 3D</title>
 <style>
   :root{
@@ -36,9 +41,15 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
-    font:13px/1.45 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial;overflow:hidden}
+    font:13px/1.45 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial;overflow:hidden;
+    overscroll-behavior:none;-webkit-text-size-adjust:100%;
+    -webkit-tap-highlight-color:transparent}
   #app{position:fixed;inset:0}
   canvas{display:block}
+  /* O canvas 3D e' o alvo do arrasto: nenhum gesto do sistema pode roubar. */
+  #app canvas{touch-action:none;-webkit-user-select:none;user-select:none;
+    -webkit-touch-callout:none}
+  button{touch-action:manipulation}
   #labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
   .roomTag{
     font:600 11px/1.2 ui-sans-serif,system-ui;letter-spacing:.02em;color:#fff;
@@ -49,12 +60,14 @@
 
   #ui{position:fixed;top:0;left:0;width:274px;height:100%;background:var(--panel);
     backdrop-filter:blur(14px);border-right:1px solid var(--line);
-    display:flex;flex-direction:column;z-index:10;transition:transform .25s ease}
-  #ui.hid{transform:translateX(-274px)}
+    display:flex;flex-direction:column;z-index:15;transition:transform .25s ease;
+    padding-top:env(safe-area-inset-top)}
+  #ui.hid{transform:translateX(-274px);pointer-events:none}
   #ui header{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
   #ui h1{margin:0;font-size:14px;letter-spacing:.01em}
   #ui h1 span{display:block;font-weight:400;color:var(--dim);font-size:11px;margin-top:3px}
-  #ui .scroll{overflow-y:auto;padding:12px 16px 26px;flex:1}
+  #ui .scroll{overflow-y:auto;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;padding:12px 16px 26px;flex:1}
   #ui h2{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);
     margin:16px 0 7px;font-weight:600}
   #ui h2:first-child{margin-top:0}
@@ -80,27 +93,73 @@
     border-radius:4px;padding:0 5px;font:600 10px/1.5 ui-monospace,monospace}
   #ui footer{padding:9px 16px;border-top:1px solid var(--line);color:var(--dim);font-size:10.5px}
 
-  #toggle{position:fixed;top:12px;left:286px;z-index:11;width:32px;height:32px;border:0;
-    border-radius:8px;background:var(--panel);color:var(--txt);cursor:pointer;font-size:15px;
-    border:1px solid var(--line);transition:left .25s ease}
-  #toggle.shift{left:12px}
+  /* o left usa min() para o botao nunca sair da tela numa viewport estreita:
+     com o painel aberto ele e' a unica forma de fecha-lo. */
+  #toggle{position:fixed;top:calc(12px + env(safe-area-inset-top));z-index:14;
+    left:min(286px, calc(100vw - 44px));
+    width:32px;height:32px;border-radius:8px;background:var(--panel);color:var(--txt);
+    cursor:pointer;font-size:15px;border:1px solid var(--line);transition:left .25s ease}
+  #toggle.shift{left:calc(12px + env(safe-area-inset-left))}
 
-  #hud{position:fixed;right:12px;top:12px;z-index:10;background:var(--panel);
+  #hud{position:fixed;right:calc(12px + env(safe-area-inset-right));
+    top:calc(12px + env(safe-area-inset-top));z-index:10;background:var(--panel);
     border:1px solid var(--line);border-radius:9px;padding:9px 12px;min-width:170px}
   #hud b{color:var(--acc);font-size:12.5px}
   #hud div{color:var(--dim);font-size:11px;margin-top:2px}
-  #compass{position:fixed;right:12px;bottom:12px;z-index:10;width:74px;height:74px;
+  #compass{position:fixed;right:calc(12px + env(safe-area-inset-right));
+    bottom:calc(12px + env(safe-area-inset-bottom));z-index:10;width:74px;height:74px;
     background:var(--panel);border:1px solid var(--line);border-radius:50%}
   #fpHint{position:fixed;inset:0;display:none;place-items:center;z-index:12;
-    background:rgba(8,10,14,.72);cursor:pointer}
+    background:rgba(8,10,14,.72);cursor:pointer;-webkit-user-select:none;user-select:none}
   #fpHint div{text-align:center;color:#fff}
+  #fpHint b{font-size:16px}
   #fpHint p{color:var(--dim);margin:8px 0 0}
+  /* No dedo a dica NAO bloqueia nada: vira aviso flutuante que some sozinho. */
+  #fpHint.toque{background:none;place-items:end center;pointer-events:none;
+    padding:0 12px calc(168px + env(safe-area-inset-bottom))}
+  #fpHint.toque div{background:rgba(12,16,22,.86);border:1px solid var(--line);
+    border-radius:10px;padding:10px 14px;max-width:min(86vw,380px)}
+  #fpHint.toque b{font-size:13.5px}
+
+  /* manche virtual — polegar esquerdo. O recuo de 22px na esquerda evita a
+     faixa de swipe-back do iOS, que rouba o toque por mais touch-action que se
+     ponha. */
+  #stick{position:fixed;display:none;z-index:13;width:126px;height:126px;border-radius:50%;
+    left:calc(22px + env(safe-area-inset-left));
+    bottom:calc(16px + env(safe-area-inset-bottom));
+    background:rgba(18,22,28,.42);border:1px solid var(--line);
+    touch-action:none;-webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent}
+  #stick.on{display:block}
+  #stick i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;
+    border-radius:50%;background:rgba(216,161,94,.85);
+    border:1px solid rgba(255,255,255,.32);pointer-events:none}
+
+  /* saida garantida da caminhada — acima da dica, sempre tocavel */
+  #exitWalk{position:fixed;display:none;z-index:14;
+    right:calc(12px + env(safe-area-inset-right));
+    bottom:calc(98px + env(safe-area-inset-bottom));
+    padding:9px 13px;border-radius:9px;background:var(--panel);color:var(--txt);
+    border:1px solid var(--line);font:600 12px/1 inherit;cursor:pointer}
+  #exitWalk.on{display:block}
   #boot{position:fixed;inset:0;display:grid;place-items:center;z-index:30;background:var(--bg)}
   #boot div{text-align:center;color:var(--dim)}
   #boot b{display:block;color:var(--txt);font-size:15px;margin-bottom:6px}
   #boot .err{color:#ff8f8f;max-width:520px;text-align:left;margin-top:14px;
     font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap}
-  @media (max-width:760px){#ui{width:238px}#toggle{left:250px}}
+  @media (max-width:760px){
+    #ui{width:238px;backdrop-filter:none;background:rgba(16,20,26,.96)}
+    #ui.hid{transform:translateX(-238px)}
+    #toggle{left:min(250px, calc(100vw - 44px))}
+    #hud{min-width:0;max-width:44vw;padding:7px 10px}
+    #hud b{font-size:12px}
+    #compass{width:58px;height:58px}
+    #exitWalk{bottom:calc(82px + env(safe-area-inset-bottom))}
+  }
+  @media (max-height:460px){                     /* celular deitado */
+    #stick{width:104px;height:104px}
+    #stick i{width:46px;height:46px;margin:-23px 0 0 -23px}
+  }
 </style>
 </head>
 <body>
@@ -151,8 +210,11 @@
 <div id="hud"><b id="hudName">Vista geral</b><div id="hudInfo">Lote 16,00 × 25,00 m</div></div>
 <canvas id="compass" width="148" height="148"></canvas>
 
-<div id="fpHint"><div><b style="font-size:16px">Clique para caminhar</b>
-  <p>WASD mover · mouse olhar · Shift correr · Esc sair</p></div></div>
+<div id="fpHint"><div><b id="fpHintT">Clique para caminhar</b>
+  <p id="fpHintP">WASD mover · mouse olhar · Shift correr · Esc sair</p></div></div>
+
+<div id="stick"><i></i></div>
+<button id="exitWalk" title="Sair da caminhada">✕ Sair</button>
 
 <div id="boot"><div><b>Montando a casa…</b>carregando Three.js<div class="err" id="bootErr"></div></div></div>
 
@@ -207,16 +269,16 @@ const PLAN = {
   { "id":"estar-leste",   "a":[12.12,8.78], "b":[12.12,14.91], "t":0.16, "h":2.80, "k":"casa" },
   { "id":"tv-leste",      "a":[13.275,12.91],"b":[13.275,18.91],"t":0.15,"h":2.80, "k":"casa" },
   { "id":"garagem-leste", "a":[5.725,13.20],"b":[5.725,19.90], "t":0.15, "h":2.80, "k":"casa" },
-  { "id":"escada-leste",  "a":[7.73,14.21], "b":[7.73,19.91],  "t":0.15, "h":2.80, "k":"casa" },
+  { "id":"escada-leste",  "a":[7.725,18.355],"b":[7.725,19.905],"t":0.15,"h":2.80, "k":"casa" },
   { "id":"tv-oeste",      "a":[9.3775,14.885],"b":[9.3775,18.84],"t":0.125,"h":2.80,"k":"casa" },
   { "id":"tv-sul",        "a":[9.31,14.885],"b":[13.275,14.885],"t":0.15,"h":2.80, "k":"casa" },
   { "id":"tv-norte",      "a":[9.40,18.835],"b":[13.35,18.835],"t":0.15, "h":2.80, "k":"casa" },
-  { "id":"wc-sul",        "a":[12.12,12.955],"b":[13.275,12.955],"t":0.13,"h":2.80,"k":"casa" },
-  { "id":"wc-norte",      "a":[12.05,14.885],"b":[13.275,14.885],"t":0.13,"h":2.80,"k":"casa" },
-  { "id":"gas-leste",     "a":[6.43,16.80], "b":[6.43,17.90],   "t":0.10,"h":2.80,"k":"casa" },
-  { "id":"gas-norte",     "a":[5.80,17.85], "b":[6.48,17.85],   "t":0.10,"h":2.80,"k":"casa" },
-  { "id":"gas-sul",       "a":[5.80,16.85], "b":[6.48,16.85],   "t":0.10,"h":2.80,"k":"casa" },
-  { "id":"deposito-sul",  "a":[6.38,17.90], "b":[7.73,17.90],   "t":0.10,"h":2.80,"k":"casa" },
+  { "id":"wc-sul",        "a":[12.12,12.83], "b":[13.35,12.83],  "t":0.15,"h":2.80,"k":"casa" },
+  { "id":"wc-norte",      "a":[12.05,14.83], "b":[13.35,14.83],  "t":0.15,"h":2.80,"k":"casa" },
+  { "id":"armario-sul",   "a":[5.80,15.63], "b":[6.45,15.63],   "t":0.15,"h":2.80,"k":"casa" },
+  { "id":"armario-leste", "a":[6.375,15.555],"b":[6.375,18.205],"t":0.15,"h":2.80,"k":"casa" },
+  { "id":"gas-sul",       "a":[5.80,17.23], "b":[6.45,17.23],   "t":0.15,"h":2.80,"k":"casa" },
+  { "id":"deposito-sul",  "a":[5.80,18.28], "b":[8.05,18.28],   "t":0.15,"h":2.80,"k":"casa" },
   { "id":"apoio-leste",   "a":[1.230,5.00], "b":[1.230,7.70],   "t":0.16,"h":2.60,"k":"casa" },
   { "id":"apoio-norte",   "a":[0.15,7.625], "b":[1.31,7.625],   "t":0.15,"h":2.60,"k":"casa" }
  ],
@@ -236,17 +298,17 @@ const PLAN = {
   { "w":"casa-varanda", "s":3.20,  "e":5.20,  "sill":1.10, "head":2.50, "k":"janela", "tag":"J 200x140x110" },
   { "w":"casa-varanda", "s":5.44,  "e":11.74, "sill":0.00, "head":2.50, "k":"correr", "tag":"P 630x250" },
   { "w":"estar-leste",  "s":0.15,  "e":3.75,  "sill":0.00, "head":2.50, "k":"correr", "tag":"P 360x250" },
-  { "w":"estar-leste",  "s":5.26,  "e":5.86,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 60x210" },
+  { "w":"estar-leste",  "s":5.17,  "e":5.87,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" },
   { "w":"lavand-cozinha","s":2.87, "e":3.67,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
   { "w":"garagem-norte","s":0.24,  "e":5.34,  "sill":0.00, "head":2.50, "k":"portao", "tag":"P 510x250" },
   { "w":"garagem-leste","s":0.24,  "e":1.04,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
+  { "w":"garagem-leste","s":2.86,  "e":3.87,  "sill":0.00, "head":1.20, "k":"duplo",  "tag":"P 150x120" },
   { "w":"garagem-leste","s":4.20,  "e":4.90,  "sill":0.00, "head":1.60, "k":"porta",  "tag":"P 70x160" },
   { "w":"garagem-leste","s":5.27,  "e":5.97,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" },
   { "w":"tv-oeste",     "s":2.115, "e":3.325, "sill":0.00, "head":2.50, "k":"porta",  "tag":"P 120x250" },
   { "w":"tv-norte",     "s":1.74,  "e":3.34,  "sill":0.00, "head":2.50, "k":"correr", "tag":"J 160x250x00" },
   { "w":"apoio-leste",  "s":1.92,  "e":2.52,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 60x210" },
-  { "w":"casa-y1328",   "s":4.45,  "e":5.25,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
-  { "w":"deposito-norte","s":0.30, "e":1.00,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" }
+  { "w":"wc-sul",       "s":0.084, "e":0.884, "sill":1.70, "head":2.50, "k":"janela", "tag":"J 80x80x170" }
  ],
 
  "rooms": [
@@ -262,22 +324,26 @@ const PLAN = {
   { "id":"estar",     "nome":"Estar",      "area":17.20, "piso":"ceramico",
     "poly":[[8.60,8.85],[12.04,8.85],[12.04,13.90],[8.60,13.90]], "label":[10.32,11.20] },
   { "id":"wc",        "nome":"WC",         "area":1.85,  "piso":"ceramico",
-    "poly":[[12.20,13.02],[13.20,13.02],[13.20,14.82],[12.20,14.82]], "label":[12.70,13.90] },
+    "poly":[[12.199,12.905],[13.199,12.905],[13.199,14.755],[12.199,14.755]],
+    "label":[12.70,13.83] },
   { "id":"circulacao","nome":"Circulação", "area":13.81, "piso":"ceramico",
-    "poly":[[5.80,13.36],[9.44,13.36],[9.44,18.84],[7.805,18.84],[7.805,14.36],[7.655,14.36],
-           [7.655,16.95],[6.45,16.95],[6.45,14.36],[5.80,14.36]],
+    "poly":[[5.80,13.355],[9.399,13.355],[9.399,18.755],[7.799,18.755],[7.799,18.355],
+           [7.65,18.355],[7.65,14.355],[6.45,14.355],[6.45,18.355],[5.80,18.355]],
     "label":[8.62,15.90] },
   { "id":"garagem",   "nome":"Garagem",    "area":33.00, "piso":"concreto",
     "poly":[[0.16,13.36],[5.65,13.36],[5.65,19.35],[0.16,19.35]], "label":[2.88,16.40] },
   { "id":"estartv",   "nome":"Estar TV",   "area":14.05, "piso":"ceramico",
     "poly":[[9.44,14.96],[13.20,14.96],[13.20,18.76],[9.44,18.76]], "label":[11.30,16.95] },
-  { "id":"gas",       "nome":"Gás",        "area":0.55,  "piso":"ceramico",
-    "poly":[[5.80,16.90],[6.38,16.90],[6.38,17.80],[5.80,17.80]], "label":[6.09,17.35] },
-  { "id":"deposito",  "nome":"Depósito",   "area":3.60,  "piso":"ceramico",
-    "poly":[[5.80,17.95],[7.655,17.95],[7.655,19.76],[5.80,19.76]], "label":[6.65,18.90] }
+  { "id":"armario",   "nome":"Armário",    "area":0.73,  "piso":"ceramico", "dz":0.003,
+    "poly":[[5.80,15.705],[6.30,15.705],[6.30,17.155],[5.80,17.155]], "label":[6.05,16.43] },
+  { "id":"gas",       "nome":"Gás",        "area":0.55,  "piso":"ceramico", "dz":0.003,
+    "poly":[[5.80,17.305],[6.30,17.305],[6.30,18.205],[5.80,18.205]], "label":[6.05,17.76] },
+  { "id":"deposito",  "nome":"Depósito",   "area":3.60,  "areaDesenhada":2.60,
+    "piso":"ceramico",
+    "poly":[[5.80,18.355],[7.655,18.355],[7.655,19.755],[5.80,19.755]], "label":[6.65,19.06] }
  ],
 
- "escada": { "x0":6.45, "x1":7.65, "y0":14.36, "y1":19.46, "degraus":19, "sobe":"sul" },
+ "escada": { "x0":6.45, "x1":7.65, "y0":14.355, "y1":19.755, "degraus":19, "sobe":"norte" },
 
  "site": {
   "plataforma":   { "x0":0.15, "x1":12.20, "y0":0.15,  "y1":5.02  },
@@ -300,9 +366,16 @@ const FLOOR = N.piso, CEIL = N.peDireito;
    2. BOOTSTRAP
    ═══════════════════════════════════════════════════════════════════════════ */
 const app = document.getElementById('app');
+
+/* ── perfil do aparelho ───────────────────────────────────────────────────
+   Ponteiro grosso = dedo. Nesses aparelhos a sombra de 4096 px e o
+   pixelRatio 2 sozinhos ja' derrubam o quadro. */
+const mqGrosso = matchMedia('(pointer:coarse)');
+const CELULAR  = mqGrosso.matches;
+
 const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance',
   preserveDrawingBuffer:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, CELULAR ? 1.5 : 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -686,19 +759,23 @@ function buildFrame(grp, o, w, base){
     const pi = new THREE.Mesh(new THREE.BoxGeometry(wd, 0.04, w.t), M.aluminio);
     pi.position.set(cx, y0+0.02, 0); grp.add(pi); pi.userData.cuttable=true;
   }
-  else if(o.k==='porta'){
+  else if(o.k==='porta' || o.k==='duplo'){
     grp.add(barFrame(cx, y0, wd, hgt, w.t, M.branco));   // batente
-    // folha entreaberta
-    const leaf = new THREE.Group();
-    leaf.position.set(o.s+0.02, y0, 0);
-    leaf.rotation.y = -0.62;
-    const lf = new THREE.Mesh(new THREE.BoxGeometry(wd-0.04, hgt-0.03, 0.035), M.madCla);
-    lf.position.set((wd-0.04)/2, hgt/2, 0); lf.castShadow=true;
-    leaf.add(lf);
-    const kn = new THREE.Mesh(new THREE.SphereGeometry(0.028,10,8), M.inox);
-    kn.position.set(wd-0.14, hgt*0.42, 0.045); leaf.add(kn);
-    leaf.traverse(o2=>{ o2.userData.cuttable=true; });
-    grp.add(leaf);
+    // folha(s) entreaberta(s); 'duplo' = duas folhas, dobradica nos dois montantes
+    const nf = o.k==='duplo' ? 2 : 1, lw = wd/nf - 0.04;
+    for(let i=0;i<nf;i++){
+      const dir = i ? -1 : 1;
+      const leaf = new THREE.Group();
+      leaf.position.set(dir>0 ? o.s+0.02 : o.e-0.02, y0, 0);
+      leaf.rotation.y = -0.62*dir;
+      const lf = new THREE.Mesh(new THREE.BoxGeometry(lw, hgt-0.03, 0.035), M.madCla);
+      lf.position.set(dir*lw/2, hgt/2, 0); lf.castShadow=true;
+      leaf.add(lf);
+      const kn = new THREE.Mesh(new THREE.SphereGeometry(0.028,10,8), M.inox);
+      kn.position.set(dir*(lw-0.10), hgt*0.42, 0.045); leaf.add(kn);
+      leaf.traverse(o2=>{ o2.userData.cuttable=true; });
+      grp.add(leaf);
+    }
   }
   else if(o.k==='portao'){
     const pg = new THREE.Group(); pg.position.set(cx, y0, 0);
@@ -734,7 +811,7 @@ function buildFloors(){
     geo.rotateX(Math.PI/2);                    // shape xy → plano xz
     const mat = r.piso==='concreto' ? M.pisoConc : M.piso;
     const m = new THREE.Mesh(geo, mat.clone());
-    m.position.y = FLOOR + 0.04;
+    m.position.y = FLOOR + 0.04 + (r.dz || 0);   // nichos sobrepoem o piso da circulacao
     m.receiveShadow = true;
     m.userData.room = r.id;
     G.casa.add(m);
@@ -751,17 +828,16 @@ function buildFloors(){
 }
 
 function buildLaje(){
-  const s = polyShape([[0.05,6.01],[13.42,6.01],[13.42,19.55],[0.05,19.55]]);
+  // O recorte no bordo norte e o vazio da escada: a partir de y ~ 16,0 o lance ja
+  // subiu o bastante para o pe-direito sob a laje cair abaixo de 2,10 m.
+  const s = polyShape([[0.05,6.01],[13.42,6.01],[13.42,19.55],[7.70,19.55],
+                       [7.70,16.00],[6.40,16.00],[6.40,19.55],[0.05,19.55]]);
   const g = new THREE.ExtrudeGeometry(s, { depth:N.laje, bevelEnabled:false });
   g.rotateX(Math.PI/2);
   const m = new THREE.Mesh(g, M.laje);
   m.position.y = FLOOR + CEIL + N.laje;
   m.castShadow = true; m.receiveShadow = true;
   G.laje.add(m);
-  // vazio da escada
-  const hole = new THREE.Mesh(new THREE.BoxGeometry(1.30, N.laje+0.08, 2.60), M.laje);
-  hole.position.set(7.05, FLOOR+CEIL+N.laje/2+0.04, 15.6);
-  hole.visible = false; G.laje.add(hole);
 }
 
 function buildTelhado(){
@@ -791,37 +867,39 @@ function buildTelhado(){
    ═══════════════════════════════════════════════════════════════════════════ */
 function buildEscada(){
   const e = PLAN.escada;
-  const n = e.degraus, wdt = e.x1-e.x0, run = (e.y1-e.y0)/n;
+  const n = e.degraus;                       // 19 espelhos, como numerado na prancha
+  const np = n - 1;                          // 18 pisos desenhados (0,30 m cotados);
+  const wdt = e.x1-e.x0, run = (e.y1-e.y0)/np;   // o 19o espelho chega direto na laje
   const rise = (CEIL + N.laje) / n;
   const g = new THREE.Group(); G.casa.add(g);
   const stepGeo = new THREE.BoxGeometry(wdt, 0.05, run+0.03);
   const riserGeo = new THREE.BoxGeometry(wdt, rise, 0.04);
-  const steps = new THREE.InstancedMesh(stepGeo, M.madCla, n);
-  const risers = new THREE.InstancedMesh(riserGeo, M.branco, n);
+  const steps = new THREE.InstancedMesh(stepGeo, M.madCla, np);
+  const risers = new THREE.InstancedMesh(riserGeo, M.branco, np);
   steps.castShadow = steps.receiveShadow = true;
   const d = new THREE.Object3D();
-  for(let i=0;i<n;i++){
-    const zc = e.y1 - run*(i+0.5);           // sobe do norte para o sul
+  for(let i=0;i<np;i++){
+    const zc = e.y0 + run*(i+0.5);           // degrau 1 ao sul, sobe para o norte
     const yc = FLOOR + rise*(i+1);
     d.position.set((e.x0+e.x1)/2, yc, zc); d.rotation.set(0,0,0); d.updateMatrix();
     steps.setMatrixAt(i, d.matrix);
-    d.position.set((e.x0+e.x1)/2, yc-rise/2, zc+run/2); d.updateMatrix();
+    d.position.set((e.x0+e.x1)/2, yc-rise/2, zc-run/2); d.updateMatrix();
     risers.setMatrixAt(i, d.matrix);
   }
   g.add(steps, risers);
   // guarda-corpo
   for(const side of [e.x0+0.03, e.x1-0.03]){
     const pts = [
-      new THREE.Vector3(side, FLOOR+0.95, e.y1),
-      new THREE.Vector3(side, FLOOR+CEIL+N.laje+0.95, e.y0)
+      new THREE.Vector3(side, FLOOR+0.95, e.y0),
+      new THREE.Vector3(side, FLOOR+CEIL+N.laje+0.95, e.y1)
     ];
     const dir = pts[1].clone().sub(pts[0]);
     const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,dir.length(),10), M.inox);
     bar.position.copy(pts[0]).add(dir.clone().multiplyScalar(0.5));
     bar.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
     bar.castShadow = true; g.add(bar);
-    for(let i=0;i<=n;i+=2){
-      const t=i/n, p=pts[0].clone().lerp(pts[1],t);
+    for(let i=0;i<=np;i+=2){
+      const t=i/np, p=pts[0].clone().lerp(pts[1],t);
       cyl(0.012, 0.95, M.inox, p.x, p.y-0.475, p.z, g, 8);
     }
   }
@@ -1209,7 +1287,7 @@ function buildSite(){
    ═══════════════════════════════════════════════════════════════════════════ */
 const sun = new THREE.DirectionalLight(0xfff2df, 2.6);
 sun.castShadow = true;
-sun.shadow.mapSize.set(4096,4096);
+sun.shadow.mapSize.setScalar(CELULAR ? 1536 : 4096);   // 4096² estoura a GPU do celular
 sun.shadow.camera.near = 1; sun.shadow.camera.far = 90;
 sun.shadow.camera.left = -22; sun.shadow.camera.right = 22;
 sun.shadow.camera.top = 26;   sun.shadow.camera.bottom = -26;
@@ -1297,6 +1375,90 @@ const fp = new PointerLockControls(persCam, renderer.domElement);
 const keys = {};
 addEventListener('keydown', e=>{ keys[e.code]=true; });
 addEventListener('keyup',   e=>{ keys[e.code]=false; });
+addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; });   // alt+tab preso
+
+/* ═══ ENTRADA POR TOQUE ════════════════════════════════════════════════════
+   Pointer Lock nao existe no iOS e e' recusado no Android, entao a caminhada
+   nao pode depender dele. Aqui: olhar por arrasto no canvas + manche virtual.
+   Teclado e mouse travado continuam valendo — nenhuma entrada e' exclusiva.
+   ATENCAO: fp.moveForward/moveRight so' checam fp.enabled (padrao true).
+   Nunca ligue fp.enabled ao modo — isso mata o movimento por toque.        */
+let toque = CELULAR;                    // mostrar controles de dedo
+let plQuebrado = false;                 // o browser recusou o Pointer Lock
+const temPL = typeof document.body.requestPointerLock === 'function' &&
+              typeof document.exitPointerLock === 'function';
+const plViavel = ()=> temPL && !toque && !plQuebrado;
+const andando  = ()=> mode==='walk' && (fp.isLocked || !plViavel());
+
+/* laptop hibrido: o primeiro toque de verdade liga os controles de dedo */
+addEventListener('pointerdown', e=>{
+  if(e.pointerType==='touch' && !toque){ toque = true; modoToque(); }
+}, true);
+mqGrosso.addEventListener?.('change', e=>{ if(e.matches && !toque){ toque=true; modoToque(); } });
+
+/* ── olhar: arrastar em qualquer ponto da cena ───────────────────────────── */
+/* setPointerCapture estoura se o ponteiro ja' foi liberado entre o disparo e
+   o handler — nunca pode derrubar o resto do tratamento. */
+const capta = (el, id)=>{ try{ el.setPointerCapture(id); }catch(_){} };
+
+const _eu = new THREE.Euler(0,0,0,'YXZ');       // mesma ordem do PointerLockControls
+const OLHAR = 0.0042, PITCH = Math.PI/2 - 0.02; // rad por pixel · trava do pitch
+const cvs = renderer.domElement;
+let olhoId = null, olhoX = 0, olhoY = 0;
+cvs.addEventListener('pointerdown', e=>{
+  if(mode!=='walk' || fp.isLocked || olhoId!==null) return;
+  olhoId = e.pointerId; olhoX = e.clientX; olhoY = e.clientY;
+  capta(cvs, e.pointerId);
+  escondeDica();
+});
+cvs.addEventListener('pointermove', e=>{
+  if(e.pointerId!==olhoId) return;
+  const dx = e.clientX-olhoX, dy = e.clientY-olhoY;
+  olhoX = e.clientX; olhoY = e.clientY;
+  _eu.setFromQuaternion(persCam.quaternion);
+  _eu.y -= dx*OLHAR;
+  _eu.x  = THREE.MathUtils.clamp(_eu.x - dy*OLHAR, -PITCH, PITCH);
+  _eu.z  = 0;                                   // sem rolagem
+  persCam.quaternion.setFromEuler(_eu);
+});
+/* Se a captura falhar, o dedo soltar fora do canvas ou o iOS cancelar o
+   gesto, o pointerup nunca chega ao elemento e o olhar morre preso.
+   Por isso a soltura tambem escuta na janela. */
+const soltaOlho = e=>{ if(e.pointerId===olhoId) olhoId = null; };
+cvs.addEventListener('lostpointercapture', soltaOlho);
+addEventListener('pointerup', soltaOlho);
+addEventListener('pointercancel', soltaOlho);
+
+/* ── manche virtual (polegar esquerdo) ───────────────────────────────────── */
+const stick = document.getElementById('stick'), knob = stick.firstElementChild;
+const CURSO = 46;                               // curso maximo em px
+let mancheId = null, jx = 0, jy = 0;            // vetor -1..1 (jy: tela, baixo +)
+function poeManche(dx, dy){
+  const d = Math.hypot(dx,dy), k = d>CURSO ? CURSO/d : 1;
+  dx*=k; dy*=k;
+  knob.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`;
+  jx = dx/CURSO; jy = dy/CURSO;
+}
+function doCentro(e){
+  const r = stick.getBoundingClientRect();
+  poeManche(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2));
+}
+function zeraEntrada(){
+  olhoId = mancheId = null; jx = jy = 0; knob.style.transform = '';
+}
+stick.addEventListener('pointerdown', e=>{
+  if(mancheId!==null) return;
+  mancheId = e.pointerId; capta(stick, e.pointerId);
+  escondeDica(); doCentro(e); e.preventDefault();
+});
+stick.addEventListener('pointermove', e=>{ if(e.pointerId===mancheId) doCentro(e); });
+const soltaManche = e=>{
+  if(e.pointerId!==mancheId) return;
+  mancheId = null; jx = jy = 0; knob.style.transform = '';
+};
+stick.addEventListener('lostpointercapture', soltaManche);   // gesto cancelado pelo iOS
+addEventListener('pointerup', soltaManche);
+addEventListener('pointercancel', soltaManche);
 
 let mode = 'iso';
 function activeCam(){ return mode==='iso' ? isoCam : persCam; }
@@ -1473,24 +1635,63 @@ function setMode(m){
   setLamps(dentro);
   document.getElementById('tCeil').checked = dentro;
   document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
-  document.getElementById('fpHint').style.display = (m==='walk' && !fp.isLocked) ? 'grid' : 'none';
   orbit.enabled = (m==='iso');
-  if(m!=='walk' && fp.isLocked) fp.unlock();
+  if(m!=='walk' && fp.isLocked && document.exitPointerLock) fp.unlock();
   if(m==='tour'){ startTour(); modeNote.textContent='Tour automático pelos ambientes. Clique em outro modo para sair.'; }
   else tour = null;
   if(m==='iso'){ modeNote.textContent='Arraste para orbitar · roda para zoom · botão direito para deslocar.'; }
   if(m==='walk'){
-    modeNote.textContent='Clique na cena para travar o mouse. WASD move, Shift corre, Esc sai.';
+    modeNote.textContent = toque
+      ? 'Arraste na cena para olhar · manche à esquerda para andar · ✕ Sair volta.'
+      : 'Clique na cena para travar o mouse. WASD move, Shift corre, Esc sai.';
     const c = roomCenter(roomById('estar'));
     persCam.position.set(c.x, FLOOR+1.65, c.z+1.0);
     persCam.rotation.set(0,Math.PI,0);
     setHud('Caminhando','Estar');
+    if(matchMedia('(max-width:760px)').matches) fechaPainel();   // painel cobria a tela
   }
+  modoToque();                       // dica, manche e saida conforme o estado final
 }
 document.querySelectorAll('#modes button').forEach(b=> b.onclick = ()=>setMode(b.dataset.mode));
-document.getElementById('fpHint').onclick = ()=> fp.lock();
-fp.addEventListener('lock',   ()=> document.getElementById('fpHint').style.display='none');
-fp.addEventListener('unlock', ()=>{ if(mode==='walk') document.getElementById('fpHint').style.display='grid'; });
+
+/* ── dica da caminhada · nunca pode prender o usuario ─────────────────────
+   No dedo ela vira um aviso sem pointer-events; no mouse continua sendo o
+   alvo do clique que trava o ponteiro — mas some ANTES de tentar travar. */
+const dica  = document.getElementById('fpHint');
+const dicaT = document.getElementById('fpHintT'), dicaP = document.getElementById('fpHintP');
+const exitBtn = document.getElementById('exitWalk');
+let dicaTimer = 0;
+function escondeDica(){ clearTimeout(dicaTimer); dica.style.display = 'none'; }
+function modoToque(){
+  const walk = mode==='walk';
+  stick.classList.toggle('on', walk && toque);
+  exitBtn.classList.toggle('on', walk && toque);
+  dica.classList.toggle('toque', toque);
+  if(!walk){ escondeDica(); zeraEntrada(); return; }
+  if(toque){
+    dicaT.textContent = 'Toque e arraste para olhar';
+    dicaP.textContent = 'Use o manche à esquerda para andar · empurre até o fim para correr';
+    dica.style.display = 'grid';
+    clearTimeout(dicaTimer); dicaTimer = setTimeout(escondeDica, 5000);
+  } else if(!fp.isLocked && plViavel()){
+    dicaT.textContent = 'Clique para caminhar';
+    dicaP.textContent = 'WASD mover · mouse olhar · Shift correr · Esc sair';
+    dica.style.display = 'grid';
+  } else escondeDica();                        // sem lock viavel: arrasta e anda
+}
+/* fp.lock() engole a promise e estoura no iOS, entao pedimos o lock na mao. */
+function travaMouse(){
+  if(!plViavel()) return;
+  try{
+    const p = renderer.domElement.requestPointerLock();
+    if(p && p.catch) p.catch(()=>{ plQuebrado = true; modoToque(); });   // Android
+  }catch(_){ plQuebrado = true; modoToque(); }                           // iOS
+}
+dica.onclick = ()=>{ escondeDica(); travaMouse(); };
+document.addEventListener('pointerlockerror', ()=>{ plQuebrado = true; escondeDica(); modoToque(); });
+fp.addEventListener('lock',   ()=>{ escondeDica(); olhoId = null; });
+fp.addEventListener('unlock', ()=>{ if(mode==='walk') modoToque(); });
+exitBtn.onclick = ()=> setMode('iso');
 
 const hourEl = document.getElementById('hour'), hourTxt = document.getElementById('hourTxt');
 hourEl.oninput = ()=>{
@@ -1512,6 +1713,10 @@ bind('tPlan',  v=>{ if(planOverlay) planOverlay.visible = v; });
 
 const ui = document.getElementById('ui'), toggleBtn = document.getElementById('toggle');
 toggleBtn.onclick = ()=>{ ui.classList.toggle('hid'); toggleBtn.classList.toggle('shift'); };
+function fechaPainel(){ ui.classList.add('hid'); toggleBtn.classList.add('shift'); }
+/* Na tela pequena o painel come quase tudo: comeca recolhido. */
+if(matchMedia('(max-width:760px)').matches) fechaPainel();
+modoToque();                                  // estado inicial de dica/manche/saida
 
 function resetView(){
   isoZoom = 15.5; isoFrustum();
@@ -1588,13 +1793,24 @@ function loop(){
   const dt = Math.min((now-last)/1000, 0.05); last = now;
 
   if(mode==='iso'){ orbit.update(); }
-  else if(mode==='walk' && fp.isLocked){
-    const sp = (keys['ShiftLeft']||keys['ShiftRight'] ? 4.6 : 2.2) * dt;
+  else if(andando()){
     const px = persCam.position.x, pz = persCam.position.z;
-    if(keys['KeyW']||keys['ArrowUp'])    fp.moveForward(sp);
-    if(keys['KeyS']||keys['ArrowDown'])  fp.moveForward(-sp);
-    if(keys['KeyA']||keys['ArrowLeft'])  fp.moveRight(-sp);
-    if(keys['KeyD']||keys['ArrowRight']) fp.moveRight(sp);
+    let ex = 0, ez = 0;                                  // eixos -1..1 (ez = frente)
+    if(keys['KeyW']||keys['ArrowUp'])    ez += 1;
+    if(keys['KeyS']||keys['ArrowDown'])  ez -= 1;
+    if(keys['KeyA']||keys['ArrowLeft'])  ex -= 1;
+    if(keys['KeyD']||keys['ArrowRight']) ex += 1;
+    const jm = Math.hypot(jx, jy);                       // quanto o manche foi empurrado
+    ex += jx; ez -= jy;                                  // Y da tela cresce para baixo
+    const len = Math.hypot(ex, ez);                      // comprimento cru
+    const mag = Math.min(1, len);                        // acelerador 0..1
+    if(mag > 0.06){                                      // zona morta do manche
+      const corre = keys['ShiftLeft']||keys['ShiftRight'] || jm > 0.86;
+      const sp = (corre ? 4.6 : 2.2) * mag * dt;
+      /* direcao normalizada por len (nao por mag): na diagonal do teclado
+         len = 1,41 e mag = 1, entao dividir por mag nao normalizaria nada. */
+      fp.moveForward(sp*ez/len); fp.moveRight(sp*ex/len);
+    }
     const [nx,nz] = collide(persCam.position.x, persCam.position.z, px, pz);
     persCam.position.x = nx; persCam.position.z = nz;
     persCam.position.y = FLOOR + 1.65;
@@ -1635,7 +1851,10 @@ window.__casa = { THREE, renderer, scene, isoCam, persCam, orbit, G, PLAN,
                   setMode:(m)=>setMode(m), focus:(id)=>focusRoom(roomById(id)),
                   shot:()=>{ renderPass.camera = ssaoPass.camera = activeCam(); composer.render();
                              return renderer.domElement.toDataURL('image/jpeg',0.72); },
-                  composer, renderPass, ssaoPass, setAO:(v)=>{ useAO = v; } };
+                  composer, renderPass, ssaoPass, setAO:(v)=>{ useAO = v; },
+                  toque:(v)=>{ if(v!==undefined) toque = v; modoToque(); return toque; },
+                  estado:()=>({ mode, toque, plQuebrado, CELULAR, isLocked:fp.isLocked,
+                                andando:andando(), jx, jy, olhoId, mancheId }) };
 try {
   build();
   document.getElementById('boot').remove();
