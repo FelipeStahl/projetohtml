@@ -7,6 +7,17 @@
   Geometria derivada da própria vetorização do PDF — ver tools/extract_plan.py.
   Validação das áreas: python tools/check_model.py
 
+  Leitura da prancha:
+    • Linhas TRACEJADAS são vigas/projeções, não alvenaria. A varanda fecha com
+      viga sobre pilares (y = 6,11) e as faixas laterais são pergolados.
+    • A divisa com a rua é linha de alinhamento — NÃO há muro frontal.
+    • Portas posicionadas pelos arcos de abertura do desenho (dobradiça + raio),
+      não por estimativa: 0,60 / 0,80 / 0,70 / 1,20 m conforme o quadro.
+    • Piscina, deck e espreguiçadeiras ficam nos FUNDOS, sobre plataforma
+      elevada (+0,45 m) revestida em pedra.
+    • Esta prancha é só o pavimento TÉRREO: a escada de 19 degraus sobe e
+      termina no vazio do forro.
+
   Como abrir:
     • Duplo clique costuma funcionar (o Three.js vem de CDN com CORS liberado).
     • Se o navegador bloquear módulos em file://, rode na pasta do arquivo:
@@ -177,28 +188,27 @@ import { OutputPass }     from 'three/addons/postprocessing/OutputPass.js';
 const PLAN = {
  "fonte": "planta.pdf — prancha 01/06, Planta Baixa Térreo 1:50",
  "lote": { "largura": 16.00, "profundidade": 25.00, "recuoLateral": 0.80 },
- "niveis": { "rua": 0.00, "piso": 0.35, "peDireito": 2.80, "laje": 0.18, "muro": 2.40 },
+ "niveis": { "rua": 0.00, "piso": 0.35, "peDireito": 2.80, "laje": 0.18,
+             "muro": 2.40, "plataforma": 0.80 },
+
  "walls": [
   { "id":"muro-fundos",   "a":[0.00,0.075], "b":[14.40,0.075], "t":0.15, "h":2.40, "k":"muro" },
-  { "id":"muro-oeste-s",  "a":[0.075,0.15], "b":[0.075,6.01],  "t":0.15, "h":2.40, "k":"muro" },
-  { "id":"casa-oeste",    "a":[0.075,6.01], "b":[0.075,19.50], "t":0.15, "h":2.80, "k":"casa" },
-  { "id":"muro-oeste-n",  "a":[0.075,19.50],"b":[0.075,24.95], "t":0.15, "h":2.40, "k":"muro" },
-  { "id":"muro-leste",    "a":[14.325,0.15],"b":[14.325,24.95],"t":0.15, "h":2.40, "k":"muro" },
-  { "id":"muro-frente",   "a":[0.00,24.80], "b":[14.40,24.80], "t":0.30, "h":2.10, "k":"muro" },
+  { "id":"muro-oeste-s",  "a":[0.075,0.15], "b":[0.075,6.11],  "t":0.15, "h":2.40, "k":"muro" },
+  { "id":"casa-oeste",    "a":[0.075,6.11], "b":[0.075,19.50], "t":0.15, "h":2.80, "k":"casa" },
+  { "id":"muro-oeste-n",  "a":[0.075,19.50],"b":[0.075,24.90], "t":0.15, "h":2.40, "k":"muro" },
+  { "id":"muro-leste-s",  "a":[14.325,0.15],"b":[14.325,6.11], "t":0.15, "h":2.40, "k":"muro" },
+  { "id":"muro-leste-n",  "a":[14.325,6.11],"b":[14.325,24.90],"t":0.15, "h":2.40, "k":"muro" },
 
-  { "id":"casa-sul",      "a":[0.00,6.11],  "b":[5.55,6.11],   "t":0.20, "h":2.80, "k":"casa" },
-  { "id":"varanda-peit",  "a":[5.55,6.11],  "b":[12.12,6.11],  "t":0.20, "h":1.10, "k":"parapeito" },
-  { "id":"casa-sul-l",    "a":[12.12,6.11], "b":[14.40,6.11],  "t":0.20, "h":2.80, "k":"casa" },
   { "id":"casa-varanda",  "a":[0.00,8.78],  "b":[13.35,8.78],  "t":0.15, "h":2.80, "k":"casa" },
   { "id":"casa-y1328",    "a":[0.15,13.28], "b":[5.80,13.28],  "t":0.16, "h":2.80, "k":"casa" },
   { "id":"garagem-norte", "a":[0.15,19.425],"b":[5.65,19.425], "t":0.15, "h":2.80, "k":"casa" },
   { "id":"deposito-norte","a":[5.65,19.835],"b":[7.80,19.835], "t":0.15, "h":2.80, "k":"casa" },
   { "id":"lavand-cozinha","a":[2.025,8.85], "b":[2.025,13.28], "t":0.15, "h":2.80, "k":"casa" },
-  { "id":"estar-leste",   "a":[12.12,6.11], "b":[12.12,14.91], "t":0.16, "h":2.80, "k":"casa" },
+  { "id":"estar-leste",   "a":[12.12,8.78], "b":[12.12,14.91], "t":0.16, "h":2.80, "k":"casa" },
   { "id":"tv-leste",      "a":[13.275,12.91],"b":[13.275,18.91],"t":0.15,"h":2.80, "k":"casa" },
   { "id":"garagem-leste", "a":[5.725,13.20],"b":[5.725,19.90], "t":0.15, "h":2.80, "k":"casa" },
   { "id":"escada-leste",  "a":[7.73,14.21], "b":[7.73,19.91],  "t":0.15, "h":2.80, "k":"casa" },
-  { "id":"tv-oeste",      "a":[9.3775,14.885],"b":[9.3775,18.84],"t":0.125,"h":2.80, "k":"casa" },
+  { "id":"tv-oeste",      "a":[9.3775,14.885],"b":[9.3775,18.84],"t":0.125,"h":2.80,"k":"casa" },
   { "id":"tv-sul",        "a":[9.31,14.885],"b":[13.275,14.885],"t":0.15,"h":2.80, "k":"casa" },
   { "id":"tv-norte",      "a":[9.40,18.835],"b":[13.35,18.835],"t":0.15, "h":2.80, "k":"casa" },
   { "id":"wc-sul",        "a":[12.12,12.955],"b":[13.275,12.955],"t":0.13,"h":2.80,"k":"casa" },
@@ -207,26 +217,38 @@ const PLAN = {
   { "id":"gas-norte",     "a":[5.80,17.85], "b":[6.48,17.85],   "t":0.10,"h":2.80,"k":"casa" },
   { "id":"gas-sul",       "a":[5.80,16.85], "b":[6.48,16.85],   "t":0.10,"h":2.80,"k":"casa" },
   { "id":"deposito-sul",  "a":[6.38,17.90], "b":[7.73,17.90],   "t":0.10,"h":2.80,"k":"casa" },
-  { "id":"deck-piscina",  "a":[5.65,21.01], "b":[14.25,21.01],  "t":0.15,"h":0.45,"k":"baixo" }
+  { "id":"apoio-leste",   "a":[1.230,5.00], "b":[1.230,7.70],   "t":0.16,"h":2.60,"k":"casa" },
+  { "id":"apoio-norte",   "a":[0.15,7.625], "b":[1.31,7.625],   "t":0.15,"h":2.60,"k":"casa" }
  ],
+
+ "vigas": [
+  { "id":"viga-varanda", "a":[0.15,6.11], "b":[13.35,6.11], "t":0.20, "alt":0.45, "pilares":6 }
+ ],
+
+ "pergolas": [
+  { "x0":12.20, "x1":14.25, "y0":2.51, "y1":5.41,  "n":5, "base":"plataforma" },
+  { "x0":12.20, "x1":14.20, "y0":8.78, "y1":12.90, "n":5, "base":"piso" }
+ ],
+
  "openings": [
   { "w":"casa-varanda", "s":0.13,  "e":0.93,  "sill":1.10, "head":2.50, "k":"janela", "tag":"J 80x140x110" },
-  { "w":"casa-varanda", "s":1.02,  "e":1.82,  "sill":0.00, "head":2.50, "k":"porta",  "tag":"P 80x250" },
+  { "w":"casa-varanda", "s":1.06,  "e":1.86,  "sill":0.00, "head":2.50, "k":"porta",  "tag":"P 80x250" },
   { "w":"casa-varanda", "s":3.20,  "e":5.20,  "sill":1.10, "head":2.50, "k":"janela", "tag":"J 200x140x110" },
-  { "w":"casa-varanda", "s":5.60,  "e":11.90, "sill":0.00, "head":2.50, "k":"correr", "tag":"P 630x250" },
-  { "w":"casa-sul-l",   "s":0.00,  "e":0.50,  "sill":1.70, "head":2.50, "k":"janela", "tag":"J 50x80x170" },
-  { "w":"garagem-norte","s":0.15,  "e":5.25,  "sill":0.00, "head":2.50, "k":"portao", "tag":"P 510x250" },
-  { "w":"tv-norte",     "s":1.40,  "e":3.00,  "sill":0.00, "head":2.50, "k":"correr", "tag":"J 160x250x00" },
-  { "w":"tv-oeste",     "s":1.34,  "e":2.54,  "sill":0.00, "head":2.50, "k":"vao",    "tag":"P 120x250" },
-  { "w":"lavand-cozinha","s":3.35, "e":4.15,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
+  { "w":"casa-varanda", "s":5.44,  "e":11.74, "sill":0.00, "head":2.50, "k":"correr", "tag":"P 630x250" },
+  { "w":"estar-leste",  "s":0.15,  "e":3.75,  "sill":0.00, "head":2.50, "k":"correr", "tag":"P 360x250" },
+  { "w":"estar-leste",  "s":5.26,  "e":5.86,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 60x210" },
+  { "w":"lavand-cozinha","s":2.87, "e":3.67,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
+  { "w":"garagem-norte","s":0.24,  "e":5.34,  "sill":0.00, "head":2.50, "k":"portao", "tag":"P 510x250" },
+  { "w":"garagem-leste","s":0.24,  "e":1.04,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
+  { "w":"garagem-leste","s":4.20,  "e":4.90,  "sill":0.00, "head":1.60, "k":"porta",  "tag":"P 70x160" },
+  { "w":"garagem-leste","s":5.27,  "e":5.97,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" },
+  { "w":"tv-oeste",     "s":2.115, "e":3.325, "sill":0.00, "head":2.50, "k":"porta",  "tag":"P 120x250" },
+  { "w":"tv-norte",     "s":1.74,  "e":3.34,  "sill":0.00, "head":2.50, "k":"correr", "tag":"J 160x250x00" },
+  { "w":"apoio-leste",  "s":1.92,  "e":2.52,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 60x210" },
   { "w":"casa-y1328",   "s":4.45,  "e":5.25,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 80x210" },
-  { "w":"garagem-leste","s":0.90,  "e":1.60,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" },
-  { "w":"garagem-leste","s":3.95,  "e":4.65,  "sill":0.00, "head":1.60, "k":"porta",  "tag":"P 70x160" },
-  { "w":"garagem-leste","s":5.20,  "e":5.90,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" },
-  { "w":"estar-leste",  "s":6.99,  "e":7.59,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 60x210" },
-  { "w":"estar-leste",  "s":2.10,  "e":3.30,  "sill":0.00, "head":2.50, "k":"vao",    "tag":"P 120x250" },
   { "w":"deposito-norte","s":0.30, "e":1.00,  "sill":0.00, "head":2.10, "k":"porta",  "tag":"P 70x210" }
  ],
+
  "rooms": [
   { "id":"varanda",   "nome":"Varanda",    "area":17.69, "piso":"ceramico",
     "poly":[[5.60,6.21],[12.04,6.21],[12.04,8.71],[3.15,8.71],[3.15,7.91],[5.60,7.91]],
@@ -254,16 +276,19 @@ const PLAN = {
   { "id":"deposito",  "nome":"Depósito",   "area":3.60,  "piso":"ceramico",
     "poly":[[5.80,17.95],[7.655,17.95],[7.655,19.76],[5.80,19.76]], "label":[6.65,18.90] }
  ],
+
  "escada": { "x0":6.45, "x1":7.65, "y0":14.36, "y1":19.46, "degraus":19, "sobe":"sul" },
+
  "site": {
-  "rampa":   { "x0":0.42, "x1":5.52, "y0":19.55, "y1":24.65 },
-  "piscina": { "x0":10.05,"x1":13.95,"y0":21.35, "y1":24.05 },
-  "deck":    { "x0":5.65, "x1":14.25,"y0":21.01, "y1":24.30 },
-  "terraco": { "x0":7.80, "x1":14.25,"y0":18.91, "y1":21.01 },
-  "passeioLeste":{ "x0":13.35,"x1":14.25,"y0":6.21,"y1":18.91 },
-  "jardim":  { "x0":0.15, "x1":14.25,"y0":0.15,  "y1":6.01 },
-  "portaoAuto":  { "x0":0.30, "x1":5.40 },
-  "portaoPedes": { "x0":6.20, "x1":7.40 }
+  "plataforma":   { "x0":0.15, "x1":12.20, "y0":0.15,  "y1":5.02  },
+  "piscina":      { "x0":0.40, "x1":11.95, "y0":0.55,  "y1":2.25  },
+  "deckMadeira":  { "x0":12.20,"x1":14.25, "y0":2.51,  "y1":5.41  },
+  "pedras":       { "x0":0.15, "x1":12.20, "y0":5.02,  "y1":6.11  },
+  "degrausJardim":{ "x0":6.15, "x1":8.13,  "y0":3.61,  "y1":5.02  },
+  "passeioLeste": { "x0":13.35,"x1":14.25, "y0":6.11,  "y1":18.91 },
+  "terraco":      { "x0":7.80, "x1":14.25, "y0":18.91, "y1":21.01 },
+  "rampa":        { "x0":0.42, "x1":5.52,  "y0":19.55, "y1":24.60 },
+  "jardimFrente": { "x0":5.65, "x1":14.25, "y0":21.01, "y1":24.90 }
  }
 };
 /* PLAN-DATA-END */
@@ -400,6 +425,22 @@ function texGrama(){
   }
   return c;
 }
+/** Pedra natural (revestimento da plataforma dos fundos). */
+function texPedra(){
+  const S=512,[c,x]=cv(S,S);
+  x.fillStyle='#9a9187'; x.fillRect(0,0,S,S);
+  for(let i=0;i<210;i++){
+    const px=Math.random()*S, py=Math.random()*S;
+    const w=26+Math.random()*54, h=16+Math.random()*30;
+    x.save(); x.translate(px,py); x.rotate(Math.random()*3.14);
+    x.fillStyle=`hsl(${28+Math.random()*22},${5+Math.random()*13}%,${38+Math.random()*30}%)`;
+    x.beginPath(); x.ellipse(0,0,w/2,h/2,0,0,7); x.fill();
+    x.strokeStyle='rgba(60,54,48,.5)'; x.lineWidth=1.6; x.stroke();
+    x.restore();
+  }
+  noise(x,S,S,14);
+  return c;
+}
 /** Água da piscina. */
 function texAgua(){
   const S=256,[c,x]=cv(S,S);
@@ -433,6 +474,7 @@ function initTextures(){
   T.madCla = texMadeira('#b08d5f');
   T.grama  = texGrama();
   T.agua   = texAgua();
+  T.pedra  = texPedra();
 }
 const M = {};
 function initMaterials(){
@@ -455,10 +497,14 @@ function initMaterials(){
   M.laje = new THREE.MeshStandardMaterial({ color:0xf6f4f0, roughness:0.95 });
   M.grama = new THREE.MeshStandardMaterial({ map: tex(T.grama,7,3), roughness:1 });
   M.calcada = new THREE.MeshStandardMaterial({ color:0xb9b5ad, roughness:0.95 });
+  M.pedra = new THREE.MeshStandardMaterial({ map: tex(T.pedra,2,2), roughness:0.88 });
   M.asfalto = new THREE.MeshStandardMaterial({ color:0x4b4b4f, roughness:0.98 });
+  // Vidro sem 'transmission': o passe de transmissao brigava com o SSAO e
+  // deixava os panos grandes com cara de painel cinza opaco.
   M.vidro = new THREE.MeshPhysicalMaterial({
-    color:0xdfeef5, roughness:0.03, metalness:0, transmission:0.94, thickness:0.02,
-    transparent:true, opacity:0.42, side:THREE.DoubleSide, ior:1.5 });
+    color:0xdff0f7, roughness:0.06, metalness:0.0, transparent:true, opacity:0.16,
+    side:THREE.DoubleSide, depthWrite:false,
+    envMapIntensity:1.6, clearcoat:1.0, clearcoatRoughness:0.03 });
   M.esquadria = new THREE.MeshStandardMaterial({ color:0x2f3336, roughness:0.42, metalness:0.72 });
   M.aluminio  = new THREE.MeshStandardMaterial({ color:0xb6bbc0, roughness:0.32, metalness:0.85 });
   M.inox      = new THREE.MeshStandardMaterial({ color:0xd4d8dc, roughness:0.22, metalness:0.95 });
@@ -551,7 +597,7 @@ function buildWalls(){
     const ang = Math.atan2(dy,dx);           // no plano xy da planta
     const ops = PLAN.openings.filter(o=>o.w===w.id).sort((p,q)=>p.s-q.s);
     const base = (w.k==='muro'||w.k==='baixo') ? 0 : FLOOR;
-    const mat  = w.k==='muro' ? M.muro : (w.k==='parapeito' ? M.paredeExt : M.parede);
+    const mat  = w.k==='muro' ? M.muro : M.parede;
 
     const grp = new THREE.Group();
     grp.position.set(w.a[0], 0, w.a[1]);
@@ -598,18 +644,6 @@ function buildWalls(){
       const cap = new THREE.Mesh(new THREE.BoxGeometry(len+0.04, 0.06, w.t+0.06), M.muro);
       cap.position.set(len/2, w.h+0.03, 0); cap.castShadow=true; grp.add(cap);
     }
-    if(w.k==='parapeito'){
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(len, 0.05, w.t+0.08), M.branco);
-      cap.position.set(len/2, base+w.h+0.025, 0); cap.castShadow=true; grp.add(cap);
-      // pilares da varanda
-      const n = 4;
-      for(let i=0;i<=n;i++){
-        const px = (len/n)*i;
-        const p = new THREE.Mesh(new THREE.BoxGeometry(0.22,CEIL-w.h,0.22), M.paredeExt);
-        p.position.set(Math.min(Math.max(px,0.12),len-0.12), base+w.h+(CEIL-w.h)/2, 0);
-        p.castShadow=true; p.userData.cuttable=true; grp.add(p);
-      }
-    }
   });
 }
 
@@ -618,35 +652,42 @@ function buildFrame(grp, o, w, base){
   const wd = o.e-o.s, cx = (o.s+o.e)/2, hgt = o.head-o.sill;
   const y0 = base+o.sill;
 
+  /* Caixilho = quatro barras no perimetro. Antes era uma caixa macica, o que
+     transformava cada folha num painel opaco. */
+  const sash = (px, py, sw, sh, dz, bar, mat)=>{
+    const mk=(bw,bh,ox,oy)=>{
+      const m=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bar), mat);
+      m.position.set(px+ox, py+oy, dz); m.castShadow=true;
+      m.userData.cuttable=true; grp.add(m);
+    };
+    mk(sw, bar, 0,  sh/2-bar/2);
+    mk(sw, bar, 0, -sh/2+bar/2);
+    mk(bar, sh-bar*2, -sw/2+bar/2, 0);
+    mk(bar, sh-bar*2,  sw/2-bar/2, 0);
+    const g=new THREE.Mesh(new THREE.PlaneGeometry(sw-bar*2, sh-bar*2), M.vidro);
+    g.position.set(px, py, dz); g.userData.cuttable=true; grp.add(g);
+  };
+
   if(o.k==='janela'){
-    const f = new THREE.Mesh(new THREE.BoxGeometry(wd, hgt, w.t*0.55), M.esquadria);
-    f.position.set(cx, y0+hgt/2, 0); grp.add(f); f.userData.cuttable=true;
-    const g = new THREE.Mesh(new THREE.BoxGeometry(wd-0.10, hgt-0.10, 0.012), M.vidro);
-    g.position.set(cx, y0+hgt/2, 0); grp.add(g); g.userData.cuttable=true;
-    const mul = new THREE.Mesh(new THREE.BoxGeometry(0.05, hgt, w.t*0.6), M.esquadria);
-    mul.position.set(cx, y0+hgt/2, 0); grp.add(mul); mul.userData.cuttable=true;
-    // peitoril
+    sash(cx, y0+hgt/2, wd, hgt, 0, 0.05, M.esquadria);
+    const mul = new THREE.Mesh(new THREE.BoxGeometry(0.045, hgt-0.10, w.t*0.45), M.esquadria);
+    mul.position.set(cx, y0+hgt/2, 0); mul.userData.cuttable=true; grp.add(mul);
     const p = new THREE.Mesh(new THREE.BoxGeometry(wd+0.10, 0.04, w.t+0.10), M.branco);
     p.position.set(cx, y0-0.02, 0); p.castShadow=true; grp.add(p); p.userData.cuttable=true;
   }
   else if(o.k==='correr'){
     const nf = Math.max(2, Math.round(wd/1.6));
     for(let i=0;i<nf;i++){
-      const fw = wd/nf, fx = o.s+fw*(i+0.5), z = (i%2? 1:-1)*w.t*0.16;
-      const fr = new THREE.Mesh(new THREE.BoxGeometry(fw, hgt, 0.05), M.aluminio);
-      fr.position.set(fx, y0+hgt/2, z); grp.add(fr); fr.userData.cuttable=true;
-      const gl = new THREE.Mesh(new THREE.BoxGeometry(fw-0.09, hgt-0.09, 0.012), M.vidro);
-      gl.position.set(fx, y0+hgt/2, z); grp.add(gl); gl.userData.cuttable=true;
+      const fw = wd/nf, fx = o.s+fw*(i+0.5), z = (i%2? 1:-1)*w.t*0.17;
+      sash(fx, y0+hgt/2, fw, hgt, z, 0.055, M.aluminio);
     }
     const tr = new THREE.Mesh(new THREE.BoxGeometry(wd, 0.06, w.t), M.aluminio);
     tr.position.set(cx, y0+hgt+0.03, 0); grp.add(tr); tr.userData.cuttable=true;
+    const pi = new THREE.Mesh(new THREE.BoxGeometry(wd, 0.04, w.t), M.aluminio);
+    pi.position.set(cx, y0+0.02, 0); grp.add(pi); pi.userData.cuttable=true;
   }
   else if(o.k==='porta'){
-    const jamb = new THREE.Mesh(new THREE.BoxGeometry(wd+0.10, hgt+0.05, w.t+0.04), M.branco);
-    const hole = new THREE.Mesh(new THREE.BoxGeometry(wd, hgt, w.t+0.08), M.branco);
-    jamb.position.set(cx, y0+hgt/2, 0); hole.position.copy(jamb.position);
-    // batente = moldura fina (3 barras) em vez de subtração
-    grp.add(barFrame(cx, y0, wd, hgt, w.t, M.branco));
+    grp.add(barFrame(cx, y0, wd, hgt, w.t, M.branco));   // batente
     // folha entreaberta
     const leaf = new THREE.Group();
     leaf.position.set(o.s+0.02, y0, 0);
@@ -966,7 +1007,6 @@ function buildFurniture(){
   box(1.10,0.90,0.70,M.preto,4.35,F+1.56,6.70,chu,{round:0.03});
   cyl(0.16,1.30,M.paredeExt,4.35,F+2.60,6.70,chu,12);
   mkPlanta(6.30,6.70,1.15); mkPlanta(11.60,6.75,0.95);
-  mkArmario(0.30,1.20,6.50,7.55,0.90,M.madEsc,M.bancada);              // apoio externo
 
   /* ─── WC  x 12,20–13,20 · y 13,02–14,64 ──────────────────────────────── */
   box(0.36,0.40,0.62,M.louca,12.55,F+0.20,13.35,G.mob,{round:0.06});   // vaso
@@ -1009,88 +1049,159 @@ function buildFurniture(){
 /* ═══════════════════════════════════════════════════════════════════════════
    9. TERRENO E ÁREA EXTERNA
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Vigas aparentes e pergolados.
+   Na prancha estes elementos aparecem TRACEJADOS — são projeções de estrutura
+   sobre o piso, não alvenaria. A varanda, por exemplo, é fechada só por uma
+   viga sobre pilares; não existe parede no alinhamento y = 6,11. */
+function buildVigas(){
+  (PLAN.vigas || []).forEach(v=>{
+    const dx = v.b[0]-v.a[0], dy = v.b[1]-v.a[1];
+    const len = Math.hypot(dx,dy), ang = Math.atan2(dy,dx);
+    const g = new THREE.Group();
+    g.position.set(v.a[0], 0, v.a[1]); g.rotation.y = -ang;
+    G.casa.add(g);
+    const topo = FLOOR + CEIL;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(len, v.alt, v.t), M.paredeExt);
+    b.position.set(len/2, topo - v.alt/2, 0);
+    b.castShadow = b.receiveShadow = true;
+    g.add(b);
+    const hCol = topo - v.alt - FLOOR;
+    for(let i=0;i<v.pilares;i++){
+      const px = len*(i+0.5)/v.pilares;
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.22, hCol, 0.22), M.paredeExt);
+      c.position.set(px, FLOOR + hCol/2, 0);
+      c.castShadow = c.receiveShadow = true;
+      g.add(c);
+    }
+  });
+}
+
+function buildPergolas(){
+  (PLAN.pergolas || []).forEach(p=>{
+    const base = p.base === 'plataforma' ? N.plataforma : FLOOR;
+    const topo = base + 2.60;
+    const w = p.x1-p.x0, d = p.y1-p.y0, cx = (p.x0+p.x1)/2, cz = (p.y0+p.y1)/2;
+    for(const x of [p.x0+0.10, p.x1-0.10])
+      box(0.16, 0.30, d, M.madEsc, x, topo-0.15, cz, G.site);
+    for(let i=0;i<p.n;i++)
+      box(w, 0.20, 0.10, M.madEsc, cx, topo-0.40, p.y0 + d*(i+0.5)/p.n, G.site);
+    for(const z of [p.y0+0.12, p.y1-0.12])
+      box(0.17, topo-base, 0.17, M.madEsc, p.x1-0.12, base+(topo-base)/2, z, G.site);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9b. TERRENO, PLATAFORMA DOS FUNDOS E ÁREA EXTERNA
+
+   Não há muro entre a rua e a casa: no desenho a divisa frontal é apenas a
+   linha de alinhamento (traço-e-ponto). A piscina fica nos FUNDOS, sobre uma
+   plataforma elevada revestida em pedra, como na prancha.
+   ═══════════════════════════════════════════════════════════════════════════ */
 function buildSite(){
   const s = PLAN.site, L = PLAN.lote, off = L.recuoLateral;
+  const PLAT = N.plataforma;
 
-  // terreno amplo + rua
+  // terreno, rua e calçada
   const gmat = M.grama.clone();
   gmat.map = M.grama.map.clone(); gmat.map.repeat.set(95,95); gmat.map.needsUpdate = true;
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(190,190), gmat);
   ground.rotation.x = -Math.PI/2; ground.position.set(7.2,-0.02,12.5);
   ground.receiveShadow = true; G.site.add(ground);
-  slab(-off-14, L.largura-off+14, 25.0, 33.0, -0.01, 0.02, M.asfalto);     // rua
-  slab(-off-14, L.largura-off+14, 25.0, 26.6, 0.00, 0.05, M.calcada);      // calçada
+  slab(-off-14, L.largura-off+14, 25.0, 33.0, -0.01, 0.02, M.asfalto);
+  slab(-off-14, L.largura-off+14, 25.0, 26.6, 0.00, 0.05, M.calcada);
 
-  // jardim dos fundos
-  slab(s.jardim.x0, s.jardim.x1, s.jardim.y0, s.jardim.y1, 0.0, 0.06, M.grama);
-  // passeio lateral leste
-  slab(s.passeioLeste.x0, s.passeioLeste.x1, s.passeioLeste.y0, s.passeioLeste.y1,
-       0.0, F, M.calcada);
-  // pátio frontal + terraço
-  slab(s.terraco.x0, s.terraco.x1, s.terraco.y0, s.terraco.y1, 0.0, F, M.calcada);
-
-  // deck de madeira: quatro faixas contornando a piscina
-  const pz = s.piscina;
-  const dmat = M.deck.clone();
-  dmat.map = M.deck.map.clone(); dmat.map.repeat.set(6,3); dmat.map.needsUpdate = true;
-  [[s.deck.x0, s.deck.x1, s.deck.y0, pz.y0],
-   [s.deck.x0, s.deck.x1, pz.y1, s.deck.y1],
-   [s.deck.x0, pz.x0, pz.y0, pz.y1],
-   [pz.x1, s.deck.x1, pz.y0, pz.y1]].forEach(q=>{
-     if(q[1]-q[0] > 0.02 && q[3]-q[2] > 0.02) slab(q[0],q[1],q[2],q[3], 0.0, F-0.02, dmat);
-   });
-
-  // piscina: cuba + água
-  const p = s.piscina, dep = 1.35;
-  [[p.x0-0.20,p.x1+0.20,p.y0-0.20,p.y0],[p.x0-0.20,p.x1+0.20,p.y1,p.y1+0.20],
-   [p.x0-0.20,p.x0,p.y0,p.y1],[p.x1,p.x1+0.20,p.y0,p.y1]]
-    .forEach(q=> slab(q[0],q[1],q[2],q[3], F-0.06, 0.06, M.branco));   // borda em L
-  const cuba = new THREE.Mesh(new THREE.BoxGeometry(p.x1-p.x0, dep, p.y1-p.y0),
+  /* ─── FUNDOS: plataforma elevada com piscina ──────────────────────────── */
+  const P = s.plataforma, pz = s.piscina;
+  // muro de arrimo revestido em pedra (face sul, voltada para a varanda)
+  slab(P.x0, P.x1, P.y1-0.18, P.y1, 0.0, PLAT, M.pedra);
+  // laje da plataforma, contornando a piscina
+  [[P.x0, P.x1, P.y0, pz.y0], [P.x0, P.x1, pz.y1, P.y1-0.18],
+   [P.x0, pz.x0, pz.y0, pz.y1], [pz.x1, P.x1, pz.y0, pz.y1]].forEach(q=>{
+    if(q[1]-q[0] > 0.02 && q[3]-q[2] > 0.02)
+      slab(q[0], q[1], q[2], q[3], PLAT-0.10, 0.10, M.pedra);
+  });
+  // cuba e lâmina d'água
+  const dep = 1.40;
+  const cuba = new THREE.Mesh(new THREE.BoxGeometry(pz.x1-pz.x0, dep, pz.y1-pz.y0),
     new THREE.MeshStandardMaterial({ color:0x2b6f8c, roughness:0.25, side:THREE.BackSide }));
-  cuba.position.set((p.x0+p.x1)/2, F-dep/2, (p.y0+p.y1)/2);
+  cuba.position.set((pz.x0+pz.x1)/2, PLAT-dep/2, (pz.y0+pz.y1)/2);
   cuba.receiveShadow = true; G.site.add(cuba);
-  const agua = new THREE.Mesh(new THREE.PlaneGeometry(p.x1-p.x0-0.04, p.y1-p.y0-0.04), M.agua);
-  agua.rotation.x = -Math.PI/2; agua.position.set((p.x0+p.x1)/2, F-0.12, (p.y0+p.y1)/2);
+  const amat = M.agua.clone();
+  amat.map = M.agua.map.clone();
+  amat.map.repeat.set(Math.round((pz.x1-pz.x0)/1.8), Math.round((pz.y1-pz.y0)/1.8) || 1);
+  amat.map.needsUpdate = true;
+  const agua = new THREE.Mesh(new THREE.PlaneGeometry(pz.x1-pz.x0-0.04, pz.y1-pz.y0-0.04), amat);
+  agua.rotation.x = -Math.PI/2;
+  agua.position.set((pz.x0+pz.x1)/2, PLAT-0.14, (pz.y0+pz.y1)/2);
   G.site.add(agua); G.site.userData.agua = agua;
+  agua.material.map.wrapS = agua.material.map.wrapT = THREE.RepeatWrapping;
 
-  // espreguiçadeiras
-  for(let i=0;i<2;i++){
-    const g=new THREE.Group(); g.position.set(6.55+i*1.05, F, 22.5); G.site.add(g);
-    box(0.62,0.08,1.85,M.madCla,0,0.34,0,g,{round:0.03});
-    const enc=box(0.62,0.08,0.72,M.madCla,0,0.52,-0.78,g,{round:0.03});
-    enc.rotation.x = -0.75;
-    for(const sx of [-1,1]) for(const sz of [-1,1]) cyl(0.02,0.30,M.madEsc,sx*0.25,0.15,sz*0.75,g,8);
+  // degraus da plataforma para o nível da varanda
+  const dg = s.degrausJardim, nd = 3, hStep = (PLAT-FLOOR)/nd, dStep = (dg.y1-dg.y0)/nd;
+  for(let i=0;i<nd;i++)
+    slab(dg.x0, dg.x1, dg.y0 + dStep*i, dg.y1, 0.0, PLAT - hStep*i, M.pedra);
+
+  // faixa de pedras entre a plataforma e a varanda
+  slab(s.pedras.x0, s.pedras.x1, s.pedras.y0, s.pedras.y1, 0.0, FLOOR, M.pedra);
+
+  // espreguiçadeiras sobre a plataforma, voltadas para a piscina
+  for(let i=0;i<3;i++){
+    const g = new THREE.Group(); g.position.set(2.10 + i*1.15, PLAT, 3.55); G.site.add(g);
+    box(0.62,0.09,1.85,M.madCla,0,0.34,0,g,{round:0.03});
+    const enc = box(0.62,0.09,0.74,M.madCla,0,0.53,0.80,g,{round:0.03});
+    enc.rotation.x = 0.72;
+    for(const sx of [-1,1]) for(const sz of [-1,1])
+      cyl(0.02,0.30,M.madEsc,sx*0.25,0.15,sz*0.75,g,8);
   }
+  // guarda-sol
+  const gs = new THREE.Group(); gs.position.set(6.20, PLAT, 3.40); G.site.add(gs);
+  cyl(0.045, 2.20, M.madEsc, 0, 1.10, 0, gs, 10);
+  const lona = new THREE.Mesh(new THREE.ConeGeometry(1.15, 0.36, 9),
+    new THREE.MeshStandardMaterial({ color:0xe6dfd0, roughness:0.95, side:THREE.DoubleSide }));
+  lona.position.y = 2.25; lona.castShadow = true; gs.add(lona);
 
-  // rampa i = 6,8% (0,35 m em 5,10 m)
+  // deck de madeira a leste da piscina, sob o pergolado
+  const dk = s.deckMadeira;
+  const dmat = M.deck.clone();
+  dmat.map = M.deck.map.clone(); dmat.map.repeat.set(3,5); dmat.map.needsUpdate = true;
+  slab(dk.x0, dk.x1, dk.y0, dk.y1, PLAT-0.08, 0.08, dmat);
+  slab(dk.x0, dk.x1, dk.y0, dk.y1, 0.0, PLAT-0.08, M.pedra);
+  mkMesa((dk.x0+dk.x1)/2, (dk.y0+dk.y1)/2 - 0.4, 0.90, 0.90, 0.74, 0, M.mad).position.y = PLAT;
+  // grama restante dos fundos
+  slab(P.x1, 14.25, 0.15, 2.45, 0.0, 0.06, M.grama);
+
+  /* ─── LATERAL E FRENTE ────────────────────────────────────────────────── */
+  slab(s.passeioLeste.x0, s.passeioLeste.x1, s.passeioLeste.y0, s.passeioLeste.y1, 0.0, FLOOR, M.pedra);
+  slab(s.terraco.x0, s.terraco.x1, s.terraco.y0, s.terraco.y1, 0.0, FLOOR, M.calcada);
+
+  // rampa i = 6,8% — desce do nível da garagem até a rua, sem portão
   const r = s.rampa, len = r.y1-r.y0;
   const ramp = new THREE.Mesh(new THREE.BoxGeometry(r.x1-r.x0, 0.12, len), M.pisoConc);
-  ramp.position.set((r.x0+r.x1)/2, F/2, (r.y0+r.y1)/2);
-  ramp.rotation.x = Math.atan2(F, len);
+  ramp.position.set((r.x0+r.x1)/2, FLOOR/2, (r.y0+r.y1)/2);
+  ramp.rotation.x = Math.atan2(FLOOR, len);
   ramp.receiveShadow = true; G.site.add(ramp);
+  slab(r.x0, r.x1, 24.60, 25.00, 0.0, 0.04, M.calcada);
 
-  // portões no muro frontal
-  const gateMat = M.esquadria;
-  const mkGate=(x0,x1,h)=>{
-    const g=new THREE.Group(); g.position.set((x0+x1)/2, 0, 24.80); G.site.add(g);
-    box(x1-x0,0.08,0.06,gateMat,0,h-0.05,0,g);
-    box(x1-x0,0.08,0.06,gateMat,0,0.10,0,g);
-    const n=Math.round((x1-x0)/0.14);
-    for(let i=0;i<=n;i++) box(0.04,h,0.04,gateMat,-(x1-x0)/2+(x1-x0)*i/n,h/2,0,g);
-  };
-  mkGate(s.portaoAuto.x0, s.portaoAuto.x1, 2.05);
-  mkGate(s.portaoPedes.x0, s.portaoPedes.x1, 2.05);
+  // jardim frontal com passeio de acesso
+  const jf = s.jardimFrente;
+  slab(jf.x0, jf.x1, jf.y0, jf.y1, 0.0, 0.06, M.grama);
+  slab(7.80, 9.20, 21.01, 25.00, 0.0, 0.07, M.pedra);
 
   // vegetação
-  mkArvore(2.20,3.10,4.2); mkArvore(9.50,2.40,3.6); mkArvore(12.90,4.30,3.0);
-  mkArvore(-0.45,21.5,3.4); mkArvore(13.10,19.90,2.8);
-  for(let i=0;i<26;i++){
-    const bx = 0.5+Math.random()*13.2, bz = 0.6+Math.random()*4.9;
-    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22+Math.random()*0.22,0), M.folha);
-    b.position.set(bx, 0.18, bz); b.castShadow = true; G.site.add(b);
+  mkArvore(13.30, 3.20, 3.4); mkArvore(13.40, 8.60, 3.0);
+  mkArvore(13.60, 16.20, 3.2); mkArvore(11.60, 23.10, 3.6);
+  mkArvore(6.30, 22.60, 3.0);
+  for(let i=0;i<22;i++){
+    const bx = jf.x0 + Math.random()*(jf.x1-jf.x0), bz = jf.y0 + 0.4 + Math.random()*3.2;
+    if(bx > 7.6 && bx < 9.4) continue;
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.20+Math.random()*0.20,0), M.folha);
+    b.position.set(bx, 0.20, bz); b.castShadow = true; G.site.add(b);
   }
-  // canteiro junto ao muro frontal
-  slab(7.90,14.20,24.10,24.62, 0.0, 0.28, M.muro);
+  for(let i=0;i<10;i++){
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.18+Math.random()*0.16,0), M.folha);
+    b.position.set(12.45+Math.random()*1.6, PLAT+0.16, 0.35+Math.random()*1.9);
+    b.castShadow = true; G.site.add(b);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1454,7 +1565,8 @@ function build(){
   scene.environmentIntensity = 0.30;
 
   buildWalls(); buildFloors(); buildLaje(); buildTelhado();
-  buildEscada(); buildFurniture(); buildSite(); buildTags(); buildPlanOverlay(); buildLamps();
+  buildEscada(); buildFurniture(); buildVigas(); buildPergolas();
+  buildSite(); buildTags(); buildPlanOverlay(); buildLamps();
 
   G.laje.visible = false; G.telhado.visible = false;
   setSun(parseFloat(hourEl.value));
